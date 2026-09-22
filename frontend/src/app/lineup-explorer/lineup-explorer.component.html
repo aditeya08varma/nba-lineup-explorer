@@ -1,0 +1,153 @@
+<section class="explorer">
+  <h1>NBA lineup explorer</h1>
+  <p class="hint">2024-25 regular season, reconstructed from real play-by-play data. Net rating is points scored minus allowed per 100 possessions.</p>
+
+  <div class="filters">
+    <mat-form-field appearance="outline">
+      <mat-label>Lineup size</mat-label>
+      <mat-select [(ngModel)]="lineupSize" (selectionChange)="load()">
+        @for (size of lineupSizes; track size) {
+          <mat-option [value]="size">{{ size }}-man</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Team</mat-label>
+      <mat-select [(ngModel)]="teamId" (selectionChange)="load()">
+        <mat-option value="">All teams</mat-option>
+        @for (team of teams(); track team.id) {
+          <mat-option [value]="team.id">{{ team.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Min possessions</mat-label>
+      <input matInput type="number" min="0" [(ngModel)]="minPossessions" (change)="load()" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Show</mat-label>
+      <mat-select [(ngModel)]="limit" (selectionChange)="load()">
+        @for (option of limits; track option) {
+          <mat-option [value]="option">{{ option === 0 ? 'All' : 'Top ' + option }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+  @if (error()) {
+    <p class="message error">{{ error() }}</p>
+  } @else if (!loading() && lineups().length === 0) {
+    <p class="message">No lineups match these filters.</p>
+  }
+
+  @if (points().length > 0) {
+    <div class="chart-card">
+      <h2>Offense vs defense</h2>
+      <p class="hint">Top right is best. Dot size is possessions played. Hover for details, click to open the breakdown.</p>
+      <svg viewBox="0 0 680 350" role="img" aria-label="Offensive rating against defensive rating for each lineup">
+        @for (tick of xTicks(); track tick.value) {
+          <line class="grid" [attr.x1]="tick.pos" [attr.x2]="tick.pos" [attr.y1]="plot.top" [attr.y2]="plot.bottom" />
+          <text class="tick" [attr.x]="tick.pos" [attr.y]="plot.bottom + 18" text-anchor="middle">{{ tick.value }}</text>
+        }
+        @for (tick of yTicks(); track tick.value) {
+          <line class="grid" [attr.x1]="plot.left" [attr.x2]="plot.right" [attr.y1]="tick.pos" [attr.y2]="tick.pos" />
+          <text class="tick" [attr.x]="plot.left - 6" [attr.y]="tick.pos + 4" text-anchor="end">{{ tick.value }}</text>
+        }
+        @for (point of points(); track $index) {
+          <circle
+            class="dot"
+            [class.selected]="selected() === point.lineup"
+            [attr.cx]="point.x"
+            [attr.cy]="point.y"
+            [attr.r]="point.r"
+            (click)="select(point.lineup)"
+          >
+            <title>{{ point.label }}</title>
+          </circle>
+        }
+        <text class="axis-label" x="340" y="345" text-anchor="middle">Offensive rating</text>
+        <text class="axis-label" transform="rotate(-90)" x="-170" y="16" text-anchor="middle">Defensive rating (lower is better)</text>
+      </svg>
+    </div>
+  }
+
+  <div class="table-wrap">
+    <table mat-table matSort matSortDisableClear matSortStart="desc" [dataSource]="lineups()"
+      [matSortActive]="sortBy" [matSortDirection]="order" (matSortChange)="onSort($event)">
+      <ng-container matColumnDef="team">
+        <th mat-header-cell *matHeaderCellDef>Team</th>
+        <td mat-cell *matCellDef="let row">{{ row.team_abbreviation }}</td>
+      </ng-container>
+      <ng-container matColumnDef="players">
+        <th mat-header-cell *matHeaderCellDef>Lineup</th>
+        <td mat-cell *matCellDef="let row">
+          @for (p of row.players; track p.player_id) {
+            <span class="player">{{ p.name }}</span>
+          }
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="poss">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="total_possessions">Poss</th>
+        <td mat-cell *matCellDef="let row">{{ row.total_possessions }}</td>
+      </ng-container>
+      <ng-container matColumnDef="off_rating">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="off_rating">Off rtg</th>
+        <td mat-cell *matCellDef="let row">{{ (row.off_rating | number: '1.1-1') ?? '–' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="def_rating">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="def_rating">Def rtg</th>
+        <td mat-cell *matCellDef="let row">{{ (row.def_rating | number: '1.1-1') ?? '–' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="net_rating">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="net_rating">Net rtg</th>
+        <td mat-cell *matCellDef="let row" [class.positive]="(row.net_rating ?? 0) > 0" [class.negative]="(row.net_rating ?? 0) < 0">
+          {{ (row.net_rating | number: '1.1-1') ?? '–' }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="point_diff">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="point_diff">+/-</th>
+        <td mat-cell *matCellDef="let row" [class.positive]="row.point_diff > 0" [class.negative]="row.point_diff < 0">
+          {{ row.point_diff > 0 ? '+' + row.point_diff : row.point_diff }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="oreb_pct">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="oreb_pct">OREB%</th>
+        <td mat-cell *matCellDef="let row">{{ (row.oreb_pct | percent: '1.0-0') ?? '–' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="dreb_pct">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="dreb_pct">DREB%</th>
+        <td mat-cell *matCellDef="let row">{{ (row.dreb_pct | percent: '1.0-0') ?? '–' }}</td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="columns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns" class="clickable" (click)="select(row)"></tr>
+    </table>
+  </div>
+
+  @if (selected(); as sel) {
+    <aside class="detail">
+      <div class="detail-header">
+        <div>
+          <strong>{{ sel.team_name }}</strong>
+          @for (p of sel.players; track p.player_id) {
+            <span class="player">{{ p.name }}</span>
+          }
+        </div>
+        <button type="button" (click)="closeDetail()">Close</button>
+      </div>
+      <table class="detail-table">
+        <thead><tr><th></th><th>On offense</th><th>On defense</th></tr></thead>
+        <tbody>
+          @for (r of detailRows(); track r.label) {
+            <tr><th scope="row">{{ r.label }}</th><td>{{ r.offense }}</td><td>{{ r.defense }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </aside>
+  }
+</section>
