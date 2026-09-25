@@ -2,7 +2,7 @@
 lineups on both sides.
 
 On-court lineups come from the GameRotation endpoint (NBA's own authoritative
-player stint data — in/out times in tenths of a second of elapsed game time),
+player stint data: in/out times in tenths of a second of elapsed game time),
 not from parsing "SUB: X FOR Y" text in the play-by-play feed. That text log
 is known to sometimes drop substitution events; GameRotation doesn't have
 that problem.

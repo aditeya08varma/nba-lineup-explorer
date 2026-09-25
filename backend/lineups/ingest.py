@@ -18,7 +18,7 @@ def list_season_games(season):
 
     Home/away is resolved from each row's own TEAM_ABBREVIATION against the matchup
     string ("AWAY @ HOME" or "HOME vs. AWAY"), not from which row happens to contain
-    "@" — a handful of games (confirmed: 5 of 1230 in the 2024-25 season) have both
+    "@": a handful of games (confirmed: 5 of 1230 in the 2024-25 season) have both
     rows carrying an identical matchup string, so that shortcut isn't reliable.
     """
     gf = leaguegamefinder.LeagueGameFinder(

@@ -78,7 +78,7 @@ export class LineupExplorerComponent implements OnInit {
   order: 'asc' | 'desc' = 'desc';
 
   // State that drives the template is in signals, since this project uses zoneless
-  // change detection (no zone.js) — a plain property assigned inside an RxJS
+  // change detection (no zone.js): a plain property assigned inside an RxJS
   // subscribe callback would not trigger a re-render, but a signal update does.
   readonly lineups = signal<Lineup[]>([]);
   readonly teams = signal<Team[]>([]);

@@ -1,13 +1,12 @@
 """Aggregate possessions into lineup-level stats.
 
-Same shape of approach as the OKC Thunder assessment: group possessions by the
-set of players on court, sum both sides, derive rate stats. Rewritten fresh
-against this project's own schema. A full season is roughly 270,000
+Group possessions by the set of players on court, sum both sides, and derive
+rate stats, all against this project's own schema. A full season is roughly 270,000
 possessions rather than ~1,300, so this streams them from the database with
 .iterator() instead of loading them all into memory at once, but still builds
 the lineup groupings in Python. If this ever gets too slow for smaller lineup
 sizes (more sub-lineup combinations per possession), the next step would be
-pushing the grouping into SQL — not needed yet at this scale.
+pushing the grouping into SQL: not needed yet at this scale.
 """
 from collections import defaultdict
 from itertools import combinations

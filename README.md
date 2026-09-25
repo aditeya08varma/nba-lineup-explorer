@@ -1,9 +1,9 @@
 # NBA Lineup Explorer
 
-A lineup analytics tool built against real NBA play-by-play data, in the same
-shape as the OKC Thunder technical assessment: possession-level aggregation,
-a Django + Postgres backend, an Angular frontend with filters, a sortable
-table, a chart, and a click-through detail panel.
+A personal project: a lineup analytics tool built against real NBA
+play-by-play data. It covers possession-level aggregation, a Django + Postgres
+backend, and an Angular frontend with filters, a sortable table, a chart, and
+a click-through detail panel.
 
 ## Data
 
@@ -19,14 +19,14 @@ exactly, both teams.
 
 ## Structure
 
-- `backend/lineups/reconstruct.py` — turns one game's play-by-play into
+- `backend/lineups/reconstruct.py`: turns one game's play-by-play into
   possessions with correct 5-man lineups on both sides.
-- `backend/lineups/ingest.py` / `management/commands/bulk_ingest.py` —
+- `backend/lineups/ingest.py` / `management/commands/bulk_ingest.py`:
   resumable, rate-limited bulk pull for a full season.
-- `backend/lineups/aggregate.py` — groups possessions into lineup-level
-  stats (net rating, rebound percentages, etc.), same approach as the
-  assessment's helper, rewritten fresh against this schema.
-- `frontend/src/app/lineup-explorer/` — filters, sortable table, offense vs
+- `backend/lineups/aggregate.py`: groups possessions into lineup-level
+  stats (net rating, rebound percentages, etc.), built against this
+  project's own schema.
+- `frontend/src/app/lineup-explorer/`: filters, sortable table, offense vs
   defense chart, and a detail panel, in Angular with signals (this Angular
   version defaults to zoneless change detection).
 
@@ -49,6 +49,6 @@ npx ng serve --port 4210
 ## Known rough edges
 
 - The "Team" filter's selected-value text doesn't render next to its
-  floated label when set to "All teams" — cosmetic only, filtering itself
+  floated label when set to "All teams": cosmetic only, filtering itself
   works.
 - No automated tests yet.
